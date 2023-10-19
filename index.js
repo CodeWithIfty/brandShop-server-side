@@ -24,10 +24,17 @@ async function run() {
     await client.connect();
 
     const productCollections = client.db("fuddyDB").collection("products");
+    const MyCartProductCollections = client.db("fuddyDB").collection("myCart");
 
     app.post("/product", async (req, res) => {
       const product = req.body;
       const result = await productCollections.insertOne(product);
+      res.send(result);
+    });
+    // Add to card API
+    app.post("/add-to-cart", async (req, res) => {
+      const product = req.body;
+      const result = await MyCartProductCollections.insertOne(product);
       res.send(result);
     });
     // Get Product Brand Wise
@@ -35,6 +42,11 @@ async function run() {
       const brand = req.params.brand;
       const query = { selectedBrand: brand };
       const result = await productCollections.find(query).toArray();
+      res.send(result);
+    });
+    // Get Cart products
+    app.get("/cart-products", async (req, res) => {
+      const result = await MyCartProductCollections.find().toArray();
       res.send(result);
     });
     // Get Single Product
@@ -49,7 +61,7 @@ async function run() {
     app.put("/product-update/:_id", async (req, res) => {
       const id = req.params._id;
       const updatedProductData = req.body;
-      console.log(updatedProductData)
+      console.log(updatedProductData);
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const updateProduct = {
@@ -63,7 +75,11 @@ async function run() {
           rating: updatedProductData.updatedRating,
         },
       };
-      const result = await productCollections.updateOne(filter, updateProduct, options);
+      const result = await productCollections.updateOne(
+        filter,
+        updateProduct,
+        options
+      );
       res.send(result);
     });
 
