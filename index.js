@@ -34,9 +34,23 @@ async function run() {
     // Add to card API
     app.post("/add-to-cart", async (req, res) => {
       const product = req.body;
-      const result = await MyCartProductCollections.insertOne(product);
-      res.send(result);
+      const query = { _id: product._id };
+
+      try {
+        const existingProduct = await MyCartProductCollections.findOne(query);
+
+        if (existingProduct) {
+          res.status(409).send("Product already added to the cart.");
+        } else {
+          const result = await MyCartProductCollections.insertOne(product);
+          res.status(201).send(result);
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).send("Server error");
+      }
     });
+
     // Get Product Brand Wise
     app.get("/product/:brand", async (req, res) => {
       const brand = req.params.brand;
@@ -47,6 +61,13 @@ async function run() {
     // Get Cart products
     app.get("/cart-products", async (req, res) => {
       const result = await MyCartProductCollections.find().toArray();
+      res.send(result);
+    });
+    // Delete Product from my cart
+    app.delete("/cart-products-delete/:_id", async (req, res) => {
+      const id = req.params._id;
+      const query = { _id: id };
+      const result = await MyCartProductCollections.deleteOne(query);
       res.send(result);
     });
     // Get Single Product
